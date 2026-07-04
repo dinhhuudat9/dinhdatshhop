@@ -1,0 +1,85 @@
+RewriteEngine On
+
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
+
+<FilesMatch "\.DS_Store$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "\.sql$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+Options -Indexes
+Options -MultiViews
+
+<FilesMatch "\.(sqlite|sqlite3|db|db3)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "\.(zip|rar|7z|gz|tgz|bz2|xz|tar)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Chặn các file database đã nén dạng double-extension: .sql.gz, .db.zip, ...
+RewriteCond %{REQUEST_URI} \.(sql|sqlite|sqlite3|db|db3)\.(gz|zip|bz2|xz|7z|rar|tar|tgz)$ [NC]
+RewriteRule ^ - [F,L]
+
+
+#Xử lý Route CTV
+
+#Xử lý Route ADMIN
+RewriteRule ^admin/elfinder/?$ views/admin/elfinder.php [L,QSA]
+
+#Xử lý Route API v1
+RewriteRule ^api/v1/categories/list/?$ api/v1/categories/list.php [L,QSA]
+RewriteRule ^api/v1/orders/create/?$ api/v1/orders/create.php [L,QSA]
+RewriteRule ^api/v1/orders/status/?$ api/v1/orders/status.php [L,QSA]
+RewriteRule ^api/v1/orders/list/?$ api/v1/orders/list.php [L,QSA]
+RewriteRule ^api/v1/products/list/?$ api/v1/products/list.php [L,QSA]
+RewriteRule ^api/v1/account/balance/?$ api/v1/account/balance.php [L,QSA]
+RewriteRule ^api/v1/account/info/?$ api/v1/account/info.php [L,QSA]
+
+#Xử lý Route CLIENT
+RewriteRule ^cart/?$ index.php?module=client&action=cart [L,QSA]
+RewriteRule ^product-orders/?$ index.php?module=client&action=product-orders [L,QSA]
+RewriteRule ^product-order/([A-Za-z0-9_-]+)/?$ index.php?module=client&action=product-order&trans_id=$1 [L,QSA]
+RewriteRule ^products/?$ index.php?module=client&action=products [L,QSA]
+RewriteRule ^category/([A-Za-z0-9-]+)/?$ index.php?module=client&action=products&category=$1 [L,QSA]
+RewriteRule ^product/([A-Za-z0-9-]+)/?$ index.php?module=client&action=product&slug=$1 [L,QSA]
+RewriteRule ^blogs index.php?module=client&action=blogs [L,QSA]
+RewriteRule ^blog/([A-Za-z0-9-]+) index.php?module=client&action=blog&slug=$1 [L,QSA]
+RewriteRule ^document-api index.php?module=client&action=document-api [L,QSA]
+RewriteRule ^verify-google-login api/callback_google_login.php [L,QSA]
+RewriteRule ^order index.php?module=client&action=order [L,QSA]
+RewriteRule ^client/home index.php?module=client&action=order [L,QSA]
+RewriteRule ^ticket-detail/([A-Za-z0-9-]+) index.php?module=client&action=ticket-detail&id=$1 [L,QSA]
+RewriteRule ^api/v2 ajaxs/client/smmpanel.php?order_source=api [L,QSA]
+RewriteRule ^service/([A-Za-z0-9-]+)/([A-Za-z0-9-]+)/([A-Za-z0-9-]+) index.php?module=client&action=order&platform=$1&category=$2&service_id=$3 [L,QSA]
+RewriteRule ^service/([A-Za-z0-9-]+)/([A-Za-z0-9-]+) index.php?module=client&action=order&platform=$1&category=$2 [L,QSA]
+RewriteRule ^service/([A-Za-z0-9-]+) index.php?module=client&action=order&platform=$1 [L,QSA]
+RewriteRule ^payment/([A-Za-z0-9-]+) index.php?module=client&action=recharge-bank&trans_id=$1 [L,QSA]
+RewriteRule ^recharge-manual/([A-Za-z0-9-]+) index.php?module=client&action=recharge-manual&slug=$1 [L,QSA]
+RewriteRule ^login index.php?module=client&action= [L,QSA]
+RewriteRule ^Dashbroad index.php?module=client&action= [L,QSA]
+RewriteRule ^Auth/Login index.php?module=client&action= [L,QSA]
+RewriteRule ^join/([A-Za-z0-9-]+) index.php?module=client&action=home&aff=$1 [L,QSA]
+RewriteRule ^client/home/([A-Za-z0-9-]+) index.php?module=client&action=home&shop=$1 [L,QSA]
+RewriteRule ^client/([A-Za-z0-9-]+) index.php?module=client&action=$1 [L,QSA]
+RewriteRule ^client index.php?module=client&action= [L,QSA]
+#Xử lý Route COMMON
+RewriteRule ^common/([A-Za-z0-9-]+) index.php?module=common&action=$1 [L,QSA]
+
+
+# Xử lý thay đổi ngôn ngữ từ URL (đặt cuối cùng để tránh xung đột)
+# Chỉ áp dụng nếu không phải là file hoặc thư mục thật
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-z]{2,5})/?$ views/client/set-language.php?lang=$1 [L,QSA]

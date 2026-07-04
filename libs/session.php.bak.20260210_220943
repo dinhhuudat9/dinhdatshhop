@@ -1,0 +1,174 @@
+<?php
+
+if (!defined('IN_SITE')) {
+    die('The Request Not Found');
+}
+
+
+
+/**
+ * Lấy device_token từ cookie nếu có, hoặc tạo mới và lưu vào cookie.
+ *
+ * @param int $byteLength Độ dài byte ngẫu nhiên (ví dụ: 32).
+ * @param int $cookieExpirySeconds Thời gian sống của cookie tính bằng giây (ví dụ: 1 năm).
+ * @return string Device token (dạng hex).
+ * @throws RuntimeException Nếu không thể tạo token an toàn.
+ */
+function getOrCreateDeviceToken(int $byteLength = 32, int $cookieExpirySeconds = 31536000 /* 1 năm */): string
+{
+    $cookieName = 'device_token';
+    $expectedHexLength = $byteLength * 2;
+
+    // 1. Kiểm tra xem cookie device_token hợp lệ đã tồn tại chưa
+    if (isset($_COOKIE[$cookieName])) {
+        $token = $_COOKIE[$cookieName];
+        // Kiểm tra cơ bản: đúng độ dài và là chuỗi hex (an toàn hơn)
+        if (strlen($token) === $expectedHexLength && ctype_xdigit($token)) {
+            // Token có vẻ hợp lệ, sử dụng token hiện có
+            return $token;
+        }
+        // Nếu không hợp lệ, sẽ đi tiếp để tạo token mới
+    }
+
+    // 2. Nếu không có hoặc không hợp lệ, tạo token mới
+    try {
+        $randomBytes = random_bytes($byteLength);
+        $deviceToken = bin2hex($randomBytes); // Chuyển sang dạng hex
+
+        // 3. Đặt cookie mới với thời hạn dài và các cờ bảo mật
+        $cookieOptions = [
+            'expires' => time() + $cookieExpirySeconds,
+            'path' => '/',
+            'domain' => '', // Để trống cho domain hiện tại
+            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', // True nếu đang dùng HTTPS
+            'httponly' => true, // Quan trọng: Ngăn JS truy cập
+            'samesite' => 'Lax' // Quan trọng: Chống CSRF
+        ];
+
+        // Đặt cookie
+        setcookie($cookieName, $deviceToken, $cookieOptions);
+
+        // Cập nhật biến $_COOKIE cho lần sử dụng ngay trong script hiện tại
+        // vì setcookie chỉ gửi header cho trình duyệt, không cập nhật $_COOKIE ngay lập tức
+        $_COOKIE[$cookieName] = $deviceToken;
+
+        return $deviceToken;
+    } catch (Exception $e) {
+        // Xử lý lỗi nếu random_bytes() thất bại (rất hiếm)
+        error_log("FATAL: Could not generate secure random bytes for device token: " . $e->getMessage());
+        // Bạn cần quyết định cách xử lý ở đây:
+        // - Hiển thị lỗi nghiêm trọng
+        // - Ghi log và thử lại
+        // - Throw exception để dừng thực thi
+        throw new RuntimeException("Không thể tạo định danh thiết bị an toàn.");
+    }
+}
+
+
+function createSession($user_id, $session_token)
+{
+    global $CMSNT;
+
+
+    // Lấy device token
+    $deviceToken = getOrCreateDeviceToken();
+
+    // Cập nhật device token vào database
+    $CMSNT->update("users", [
+        'device_token' => $deviceToken
+    ], " `id` = '$user_id' ");
+
+    // Kiểm tra xem phiên đã tồn tại chưa
+    $existingSession = $CMSNT->get_row("SELECT * FROM `active_sessions` 
+        WHERE `user_id` = '$user_id' 
+        AND `device_token` = '$deviceToken'");
+
+    if ($existingSession) {
+        // Nếu phiên đã tồn tại thì chỉ cập nhật
+        $CMSNT->update("active_sessions", [
+            'session_token' => $session_token,
+            'ip_address'    => myip(),
+            'user_agent'    => getUserAgent(),
+            'last_activity' => gettime()
+        ], " `id` = '" . $existingSession['id'] . "' ");
+    } else {
+        // Nếu chưa tồn tại thì tạo mới
+        $CMSNT->insert("active_sessions", [
+            'user_id'       => $user_id,
+            'session_token' => $session_token,
+            'device_token'  => $deviceToken,
+            'ip_address'    => myip(),
+            'user_agent'    => getUserAgent(),
+            'last_activity' => gettime(),
+            'created_at'    => gettime()
+        ]);
+    }
+
+    // Lưu Cookie
+    setcookie('user_login', $session_token, time() + $CMSNT->site('session_login'), "/", "", false, true);
+}
+
+// ============================================================================
+// SECURITY CHECK - DO NOT REMOVE OR MODIFY
+// ============================================================================
+class SecurityValidator
+{
+    private static $_0x9c4a = 'MzQyMmUwMmNjMzA2YTM4ZjQwYjA3YWI1NzM3ODQyODc=';
+    private static $_0x3f7b = 'bW9kZWxzL2lzX2xpY2Vuc2UucGhw';
+    private static $_0x6e2d = 'bGlicy9kYi5waHA=';
+
+    public static function v()
+    {
+        $_0xa1 = base64_decode(self::$_0x3f7b);
+        $_0xb2 = __DIR__ . '/../' . $_0xa1;
+
+        if (!file_exists($_0xb2)) {
+            self::e('F404');
+            return false;
+        }
+
+        $_0xc3 = md5_file($_0xb2);
+        $_0xd4 = base64_decode(self::$_0x9c4a);
+
+        if ($_0xc3 !== $_0xd4) {
+            self::e('F001');
+            return false;
+        }
+
+        $_0xe5 = __DIR__ . '/' . base64_decode(self::$_0x6e2d);
+        if (file_exists($_0xe5)) {
+            $_0xf6 = @file_get_contents($_0xe5);
+            if (strpos($_0xf6, 'function _sc()') === false || strpos($_0xf6, 'function _vsc()') === false) {
+                self::e('F002');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function e($c)
+    {
+        $m = [
+            'F404' => 'Critical system file missing',
+            'F001' => 'System file integrity check failed',
+            'F002' => 'System core file has been tampered'
+        ];
+
+        $msg = isset($m[$c]) ? $m[$c] : 'Unknown error';
+
+        http_response_code(500);
+        die('<!DOCTYPE html><html><head><meta charset="utf-8"><title>System Error</title><style>body{font-family:Arial,sans-serif;background:#f5f5f5;padding:50px;text-align:center}.error-box{background:white;padding:40px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);max-width:600px;margin:0 auto}h1{color:#d9534f;margin-bottom:20px}p{color:#333;line-height:1.6}.code{background:#f8f8f8;padding:10px;border-radius:5px;font-family:monospace;margin:20px 0}.contact{margin-top:30px;padding:20px;background:#f8f8f8;border-radius:5px}.contact a{color:#0275d8;text-decoration:none;font-weight:bold}</style></head><body><div class="error-box"><h1>&#9888;&#65039; HỆ THỐNG LỖI</h1><p><strong>CẢNH BÁO:</strong> Phát hiện vi phạm tính toàn vẹn của hệ thống!</p><p>Hệ thống đã bị thay đổi không được phép. Đây là vi phạm nghiêm trọng bản quyền phần mềm.</p><div class="code">Error Code: ' . $c . '<br>Message: ' . $msg . '</div><p style="color:#d9534f;font-weight:bold">Vui lòng khôi phục lại file gốc hoặc tải lại mã nguồn từ nguồn chính thức.</p><div class="contact"><p><strong>Liên hệ hỗ trợ:</strong></p><p>Website: <a href="https://www.cmsnt.co" target="_blank">https://www.cmsnt.co</a></p><p>Client: <a href="https://client.cmsnt.co" target="_blank">https://client.cmsnt.co</a></p></div></div></body></html>');
+    }
+
+    public static function init()
+    {
+        static $checked = false;
+        if (!$checked) {
+            self::v();
+            $checked = true;
+        }
+    }
+}
+
+SecurityValidator::init();

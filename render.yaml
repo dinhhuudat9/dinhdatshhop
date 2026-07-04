@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: shopkey
+    runtime: docker
+    plan: free
