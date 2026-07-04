@@ -7,7 +7,7 @@
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.4.17
 SET FOREIGN_KEY_CHECKS=0;
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET SQL_MODE = "";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
@@ -34,8 +34,8 @@ CREATE TABLE `active_sessions` (
   `device_token` varchar(255) NOT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
   `user_agent` text DEFAULT NULL,
-  `last_activity` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+  `last_activity` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -83,7 +83,7 @@ CREATE TABLE `affiliate_clicks` (
   `referer` text DEFAULT NULL,
   `country` varchar(10) DEFAULT NULL,
   `is_unique` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1: unique, 0: repeat',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi click affiliate link';
 
 -- --------------------------------------------------------
@@ -104,8 +104,8 @@ CREATE TABLE `affiliate_commissions` (
   `commission_amount` decimal(20,2) NOT NULL DEFAULT 0.00 COMMENT 'Số tiền hoa hồng nhận được',
   `status` enum('pending','approved','cancelled') NOT NULL DEFAULT 'approved' COMMENT 'Trạng thái',
   `note` text DEFAULT NULL COMMENT 'Ghi chú',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chi tiết hoa hồng affiliate';
 
 -- --------------------------------------------------------
@@ -126,7 +126,7 @@ CREATE TABLE `affiliate_stats` (
   `total_commission_earned` decimal(20,2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng hoa hồng đã kiếm được',
   `total_commission_withdrawn` decimal(20,2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng hoa hồng đã rút',
   `available_balance` decimal(20,2) NOT NULL DEFAULT 0.00 COMMENT 'Số dư khả dụng',
-  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp()
+  `updated_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Thống kê affiliate (cache)';
 
 -- --------------------------------------------------------
@@ -192,8 +192,8 @@ CREATE TABLE `api_keys` (
   `status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '0: Disabled, 1: Active',
   `last_used_at` datetime DEFAULT NULL COMMENT 'Lần sử dụng cuối',
   `last_ip` varchar(45) DEFAULT NULL COMMENT 'IP lần sử dụng cuối',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu API Keys';
 
 -- --------------------------------------------------------
@@ -216,7 +216,7 @@ CREATE TABLE `api_logs` (
   `status` varchar(20) NOT NULL DEFAULT 'success' COMMENT 'success, failed, blocked',
   `message` varchar(255) DEFAULT NULL COMMENT 'Thông báo/lỗi',
   `execution_time` decimal(10,4) DEFAULT NULL COMMENT 'Thời gian xử lý (seconds)',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng log API requests';
 
 -- --------------------------------------------------------
@@ -379,7 +379,7 @@ CREATE TABLE `bot_telegram_logs` (
   `message` mediumtext DEFAULT NULL,
   `token` mediumtext DEFAULT NULL,
   `response` mediumtext DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -422,8 +422,8 @@ CREATE TABLE `categories` (
   `slug` varchar(255) DEFAULT NULL,
   `content` longtext DEFAULT NULL,
   `status` varchar(55) NOT NULL DEFAULT 'show',
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -471,8 +471,8 @@ CREATE TABLE `coupons` (
   `end_date` datetime DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `description` text DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -814,7 +814,7 @@ CREATE TABLE `order_expiry_notifications` (
   `id` int(11) NOT NULL,
   `order_id` int(11) NOT NULL,
   `notification_type` enum('expiring_soon','expired') NOT NULL,
-  `sent_at` datetime DEFAULT current_timestamp()
+  `sent_at` timestamp DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -845,8 +845,8 @@ CREATE TABLE `payment_bakong` (
   `price` int(11) NOT NULL DEFAULT 0 COMMENT 'Số tiền thực nhận',
   `amount` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Số tiền thanh toán',
   `status` tinyint(4) DEFAULT 0 COMMENT 'Trạng thái giao dịch: 0=pending,1=success,2=fail...',
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   `user_id` int(11) DEFAULT NULL,
   `checkout_url` varchar(255) NOT NULL,
   `notication` int(11) NOT NULL DEFAULT 0
@@ -885,8 +885,8 @@ CREATE TABLE `payment_bank_invoice` (
   `short_name` varchar(55) DEFAULT NULL,
   `amount` float NOT NULL DEFAULT 0,
   `received` float NOT NULL DEFAULT 0,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `create_time` int(11) NOT NULL DEFAULT 0,
   `status` enum('waiting','expired','completed') NOT NULL DEFAULT 'waiting',
   `note` text DEFAULT NULL,
@@ -945,8 +945,8 @@ CREATE TABLE `payment_korapay` (
   `price` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Số tiền thực nhận',
   `amount` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Số tiền thanh toán',
   `status` tinyint(4) DEFAULT 0 COMMENT 'Trạng thái giao dịch: 0=pending,1=success,2=fail...',
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   `user_id` int(11) DEFAULT NULL COMMENT 'ID user trong hệ thống (nếu có)',
   `checkout_url` varchar(255) NOT NULL,
   `notication` int(11) NOT NULL DEFAULT 0
@@ -1001,8 +1001,8 @@ CREATE TABLE `payment_openpix` (
   `price` int(11) NOT NULL DEFAULT 0 COMMENT 'Số tiền thực nhận',
   `amount` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Số tiền thanh toán',
   `status` tinyint(4) DEFAULT 0 COMMENT 'Trạng thái giao dịch: 0=pending,1=success,2=fail...',
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   `user_id` int(11) DEFAULT NULL,
   `checkout_url` varchar(255) NOT NULL,
   `notication` int(11) NOT NULL DEFAULT 0
@@ -1089,8 +1089,8 @@ CREATE TABLE `payment_tmweasyapi` (
   `price` int(11) NOT NULL DEFAULT 0 COMMENT 'Số tiền thực nhận',
   `amount` int(11) NOT NULL DEFAULT 0 COMMENT 'Số tiền thanh toán',
   `status` tinyint(4) DEFAULT 0 COMMENT 'Trạng thái giao dịch: 0=pending,1=success,2=fail...',
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   `user_id` int(11) DEFAULT NULL,
   `checkout_url` varchar(255) NOT NULL,
   `notication` int(11) NOT NULL DEFAULT 0,
@@ -1133,8 +1133,8 @@ CREATE TABLE `payment_xipay` (
   `product_name` varchar(255) DEFAULT NULL COMMENT 'Tên sản phẩm/dịch vụ',
   `status` tinyint(4) DEFAULT 0 COMMENT 'Trạng thái giao dịch: 0=pending,1=success,2=fail...',
   `notify_data` mediumtext DEFAULT NULL COMMENT 'Lưu dữ liệu notify (nếu cần)',
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   `user_id` int(11) DEFAULT NULL COMMENT 'ID user trong hệ thống (nếu có)',
   `notication` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1155,8 +1155,8 @@ CREATE TABLE `products` (
   `description` text DEFAULT NULL,
   `image` text DEFAULT NULL,
   `status` tinyint(1) DEFAULT 1,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   `rating` decimal(2,1) NOT NULL DEFAULT 0.0 COMMENT 'Điểm đánh giá trung bình (1-5)',
   `rating_count` int(11) NOT NULL DEFAULT 0 COMMENT 'Số lượng đánh giá',
   `sold` int(11) NOT NULL DEFAULT 0 COMMENT 'Số lượng đã bán'
@@ -1201,7 +1201,7 @@ CREATE TABLE `product_favorites` (
   `id` int(11) UNSIGNED NOT NULL,
   `user_id` int(11) UNSIGNED NOT NULL,
   `product_id` int(11) UNSIGNED NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1306,8 +1306,8 @@ CREATE TABLE `product_plans` (
   `sort_order` int(10) UNSIGNED DEFAULT 0,
   `status` tinyint(1) DEFAULT 1,
   `is_instant` int(11) NOT NULL DEFAULT 0,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `api_id` int(11) NOT NULL DEFAULT 0 COMMENT 'ID sản phẩm của API',
   `api_stock` int(11) NOT NULL DEFAULT 0 COMMENT 'Số lượng kho hàng lấy từ API',
   `api_sync_time` datetime DEFAULT NULL
@@ -1406,7 +1406,7 @@ CREATE TABLE `review_helpful_votes` (
   `id` int(11) NOT NULL,
   `review_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1848,7 +1848,7 @@ CREATE TABLE `support_messages` (
   `sender_type` enum('user','admin') NOT NULL,
   `sender_id` int(11) NOT NULL DEFAULT 0,
   `message` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1883,8 +1883,8 @@ CREATE TABLE `support_tickets` (
   `content` longtext DEFAULT NULL,
   `admin_note` text DEFAULT NULL,
   `status` varchar(55) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
